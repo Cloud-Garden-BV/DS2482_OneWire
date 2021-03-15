@@ -63,6 +63,8 @@ public:
 	void setStrongPullup();
     uint8_t setChannel(uint8_t ch);
 	void clearStrongPullup();
+	void clearActivePullup();
+	void setActivePullup();
 	uint8_t wireReset();
 	void wireWriteByte(uint8_t data, uint8_t power = 0);
 	uint8_t wireReadByte();

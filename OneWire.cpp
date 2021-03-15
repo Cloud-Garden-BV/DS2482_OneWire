@@ -97,7 +97,11 @@ uint8_t OneWire::readConfig()
 	setReadPointer(DS2482_POINTER_CONFIG);
 	return readByte();
 }
-
+/**
+ * @brief Strong pullup means a low-value resistor will be used as a pullup instead of the default(weak) one.
+ * This may help when devices on the bus require a lot of power, lowering the bus voltage.
+ * Datasheet warns that reset with SPU set can exceed max ratings, so turn it off before.
+ */
 void OneWire::setStrongPullup()
 {
 	writeConfig(readConfig() | DS2482_CONFIG_SPU);
@@ -106,6 +110,20 @@ void OneWire::setStrongPullup()
 void OneWire::clearStrongPullup()
 {
 	writeConfig(readConfig() & ~DS2482_CONFIG_SPU);
+}
+/**
+ * @brief Active pullup is a MOSFET controlled by the PCTLZ pin.
+ * This mosfet is turned on, on the rising edge of the bus, to help increase risetime.
+ * This should always be enabled, uless there is only a single slave on the onewire!
+ */
+void OneWire::setActivePullup()
+{
+	writeConfig(readConfig() | DS2482_CONFIG_APU);
+}
+
+void OneWire::clearActivePullup()
+{
+	writeConfig(readConfig() & ~DS2482_CONFIG_APU);
 }
 
 // Churn until the busy bit in the status register is clear
