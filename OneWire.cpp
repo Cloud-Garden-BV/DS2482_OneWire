@@ -11,7 +11,7 @@ OneWire::OneWire( VNE_WIRE *UseWire)
 	Wire.begin();
 }
 
-OneWire::OneWire(uint8_t address,  VNE_WIRE *UseWire)
+OneWire::OneWire::OneWire(uint8_t address,  VNE_WIRE *UseWire)
 {
 	// Address is determined by two pins on the DS2482 AD1/AD0
 	// Pass 0b00, 0b01, 0b10 or 0b11
@@ -48,7 +48,6 @@ void OneWire::printError(){
 }
 
 
-
 /**
  * @name I2CGetValue
  * @param address Address of I2C chip
@@ -58,11 +57,8 @@ void OneWire::printError(){
  */
 uint8_t OneWire::I2CGetByte(uint8_t address)
 {
-    if (!_Wire->I2C_LOCK())
-    {
-        Serial.println("nolock");
-        return 256;
-    }
+    if (!_Wire->I2C_LOCK())return 255;
+
     uint8_t newData = {0};
     //
     // read the address input register
@@ -80,11 +76,7 @@ uint8_t OneWire::I2CGetByte(uint8_t address)
  */
 uint8_t OneWire::I2CGetByteFrom(uint8_t address, uint8_t reg)
 {
-    if (!_Wire->I2C_LOCK())
-    {
-        Serial.println("nolock");
-        return 255;
-    }
+	if (!_Wire->I2C_LOCK())return 255;
     uint8_t newData = {0};
     // read the address input register
     mError = _Wire->i2c_master_read_slave_onebyte_offset((int)address, newData, reg);
@@ -102,11 +94,7 @@ uint8_t OneWire::I2CGetByteFrom(uint8_t address, uint8_t reg)
 void OneWire::I2CSetByte(uint8_t address, uint8_t reg, uint8_t value)
 {
     // write output register to chip
-    if (!_Wire->I2C_LOCK())
-    {
-        Serial.println("nolock");
-        return;
-    }
+    if (!_Wire->I2C_LOCK())return ;
     mError = _Wire->i2c_master_write_slave_offset(address, reg, &value, 1);
     _Wire->I2C_UNLOCK();
 }
@@ -120,11 +108,7 @@ void OneWire::I2CSetByte(uint8_t address, uint8_t reg, uint8_t value)
 void OneWire::I2CSetAddress(uint8_t address, uint8_t value)
 {
     // write output register to chip
-    if (!_Wire->I2C_LOCK())
-    {
-        Serial.println("nolock");
-        return;
-    }
+    if (!_Wire->I2C_LOCK())return;
     mError = _Wire->i2c_master_write_slave_onebyte(address,  value);
     _Wire->I2C_UNLOCK();
 }
@@ -133,38 +117,30 @@ void OneWire::I2CSetAddress(uint8_t address, uint8_t value)
 // If no devices are present, this returns false
 uint8_t OneWire::checkPresence()
 {
-	return _Wire->i2c_master_ping_slave(mAddress) ==ESP_OK ? true : false;
-	// begin();
-	// return end()==ESP_OK ? true : false;
+	if (!_Wire->I2C_LOCK())return false;
+	bool result =  _Wire->i2c_master_ping_slave(mAddress) ==ESP_OK ? true : false;
+	_Wire->I2C_UNLOCK();
+	return result;
 }
 
 // Performs a global reset of device state machine logic. Terminates any ongoing 1-Wire communication.
 void OneWire::deviceReset()
 {
-	// I2CSetAddress(mAddress, DS2482_COMMAND_RESET);
-	// begin();
 	write(DS2482_COMMAND_RESET);
-	// end();
 }
 
 
 // Sets the read pointer to the specified register. Overwrites the read pointer position of any 1-Wire communication command in progress.
 void OneWire::setReadPointer(uint8_t readPointer)
 {
-	// begin();
-	// writeByte(DS2482_COMMAND_SRP);
-	// writeByte(readPointer);
-	// end();
 	I2CSetByte(mAddress,DS2482_COMMAND_SRP, readPointer);
 }
 
 // Read the status register
 uint8_t OneWire::readStatus()
 {
-
 	setReadPointer(DS2482_POINTER_STATUS);
 	return I2CGetByte(mAddress);
-	// return readByte();
 }
 
 // Read the data register
@@ -172,7 +148,6 @@ uint8_t OneWire::readData()
 {
 	setReadPointer(DS2482_POINTER_DATA);
 	return I2CGetByte(mAddress);
-	// return readByte();
 }
 
 // Read the config register
@@ -180,7 +155,6 @@ uint8_t OneWire::readConfig()
 {
 	setReadPointer(DS2482_POINTER_CONFIG);
 	return I2CGetByte(mAddress );
-	// return readByte();
 }
 /**
  * @brief Strong pullup means a low-value resistor will be used as a pullup instead of the default(weak) one.
@@ -189,8 +163,6 @@ uint8_t OneWire::readConfig()
  */
 void OneWire::setStrongPullup()
 {
-	// return I2CGetByteFrom(mAddress,DS2482_POINTER_STATUS );
-	
 	writeConfig(readConfig() | DS2482_CONFIG_SPU);
 }
 
@@ -260,10 +232,7 @@ uint8_t OneWire::wireReset()
 
 	waitOnBusy();
 
-	// begin();
-	// writeByte(DS2482_COMMAND_RESETWIRE);
 	I2CSetAddress(mAddress, DS2482_COMMAND_RESETWIRE);
-	// end();
 
 	uint8_t status = waitOnBusy();
 
@@ -281,21 +250,15 @@ void OneWire::wireWriteByte(uint8_t data, uint8_t power)
 	waitOnBusy();
 	if (power)
 		setStrongPullup();
-	// begin();
-	// writeByte(DS2482_COMMAND_WRITEBYTE);
-	// writeByte(data);
+
 	I2CSetByte(mAddress, DS2482_COMMAND_WRITEBYTE, data);
-	// end();
 }
 
 // Generates eight read-data time slots on the 1-Wire line and stores result in the Read Data Register.
 uint8_t OneWire::wireReadByte()
 {
 	waitOnBusy();
-	// begin();
-	// writeByte(DS2482_COMMAND_READBYTE);
 	I2CSetAddress(mAddress, DS2482_COMMAND_READBYTE);
-	// end();
 	waitOnBusy();
 	return readData();
 }
@@ -309,11 +272,8 @@ void OneWire::wireWriteBit(uint8_t data, uint8_t power)
 	waitOnBusy();
 	if (power)
 		setStrongPullup();
-	// begin();
 	I2CSetByte(mAddress, DS2482_COMMAND_SINGLEBIT, data ? 0x80 : 0x00);
-	// writeByte(DS2482_COMMAND_SINGLEBIT);
-	// writeByte(data ? 0x80 : 0x00);
-	// end();
+
 }
 
 // As wireWriteBit
@@ -355,11 +315,9 @@ uint8_t OneWire::setChannel(uint8_t ch){
   uint8_t w[] = {0xf0, 0xe1, 0xd2, 0xc3, 0xb4, 0xa5, 0x96, 0x87};
   uint8_t r[] = {0xb8, 0xb1, 0xaa, 0xa3, 0x9c, 0x95, 0x8e, 0x87};
   waitOnBusy();
-//   begin();
+
   I2CSetByte(mAddress, 0xc3, w[ch]);
-//   writeByte(0xc3);
-//   writeByte(w[ch]);
-//   end();
+
   waitOnBusy();
   return readByte() == r[ch];
 }
@@ -392,11 +350,8 @@ uint8_t OneWire::wireSearch(uint8_t *address)
 			direction = i == searchLastDiscrepancy;
 
 		waitOnBusy();
-		// begin();
 		I2CSetByte(mAddress, DS2482_COMMAND_TRIPLET, direction ? 0x80 : 0x00);
-		// writeByte(DS2482_COMMAND_TRIPLET);
-		// writeByte(direction ? 0x80 : 0x00);
-		// end();
+
 
 		uint8_t status = waitOnBusy();
 

@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 #include <inttypes.h>
+#include <vne_i2c.h>
+#include "Arduino.h"
 
 
 // Chose between a table based CRC (flash expensive, fast)
@@ -46,12 +48,18 @@
 class OneWire
 {
 public:
-	OneWire();
-	OneWire(uint8_t address);
+	OneWire( VNE_WIRE *UseWire);
+	OneWire(uint8_t address,  VNE_WIRE *UseWire);
 
 	uint8_t getAddress();
 	uint8_t getError();
 	uint8_t checkPresence();
+	// I2C helper functions
+	uint8_t I2CGetByte(uint8_t address);
+	uint8_t I2CGetByteFrom(uint8_t address, uint8_t reg);
+	void I2CSetByte(uint8_t address, uint8_t reg, uint8_t value);
+	void I2CSetAddress(uint8_t address, uint8_t value);
+
 
 	void deviceReset();
 	void setReadPointer(uint8_t readPointer);
@@ -86,15 +94,15 @@ public:
 	uint8_t read(void);
 	uint8_t read_bit(void);
 	void write_bit(uint8_t v);
+	void printError();
 
 private:
-	void begin();
-	uint8_t end();
 	void writeByte(uint8_t);
 	uint8_t readByte();
 
 	uint8_t mAddress;
 	uint8_t mError;
+	VNE_WIRE *_Wire;
 
 	uint8_t searchAddress[8];
 	uint8_t searchLastDiscrepancy;
