@@ -1,5 +1,4 @@
 #include "OneWire.h"
-#include <Wire.h>
 
 // Constructor with no parameters for compatability with OneWire lib
 OneWire::OneWire( VNE_WIRE *UseWire)
@@ -8,7 +7,6 @@ OneWire::OneWire( VNE_WIRE *UseWire)
 	// Pass 0b00, 0b01, 0b10 or 0b11
 	mAddress = 0x18;
 	mError = 0;
-	Wire.begin();
 }
 
 OneWire::OneWire::OneWire(uint8_t address,  VNE_WIRE *UseWire)
